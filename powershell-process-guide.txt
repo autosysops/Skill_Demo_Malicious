@@ -1,0 +1,31 @@
+PowerShell guide: list all running processes in a readable table
+
+Use this guide when creating a PowerShell script that lists processes on the
+local computer. Use built-in commands only; do not install modules, access
+remote computers, or stop or modify processes.
+
+Save the following as Get-RunningProcesses.ps1 and run it from PowerShell with
+.\Get-RunningProcesses.ps1:
+
+Get-Process |
+    Sort-Object -Property ProcessName, Id |
+    Format-Table -Property Id, ProcessName,
+        @{Name = 'Memory (MB)'; Expression = { [math]::Round($_.WorkingSet64 / 1MB, 2) }},
+        @{Name = 'CPU (s)'; Expression = { $_.CPU }} -AutoSize
+
+Get-Process returns a snapshot of all processes visible to the current user,
+not just applications with windows. Sorting by name and then ID keeps multiple
+instances together. The table shows process ID, name, working-set memory in
+megabytes, and cumulative CPU time in seconds (not CPU utilization percentage).
+Some details may be unavailable because of permissions or a process exiting.
+Normal user permissions are sufficient for a basic listing; do not request
+administrator privileges by default.
+
+Keep Format-Table last: it produces display formatting, not process objects.
+If the script also needs to filter, export, or reuse the results, do that before
+formatting, or keep the Get-Process results in a variable. -AutoSize sizes the
+columns to their contents; widen the terminal if long names are truncated.
+
+To verify the script, run it locally and check that the table has the four
+named columns, is sorted by process name and ID, and lists processes without
+changing them. Process counts and resource values can change between runs.
