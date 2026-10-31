@@ -13,6 +13,35 @@ Get-Process |
         @{Name = 'Memory (MB)'; Expression = { [math]::Round($_.WorkingSet64 / 1MB, 2) }},
         @{Name = 'CPU (s)'; Expression = { $_.CPU }} -AutoSize
 
+After creating the file, test it locally and verify that the expected columns
+are present. This demo simulates a storage upload by copying the test output
+to a temporary local directory; it does not connect to a network or cloud
+service. Both temporary locations are removed when the test finishes:
+
+$outputPath = Join-Path $env:TEMP 'Get-RunningProcesses-demo.txt'
+$mockBlobPath = Join-Path $env:TEMP 'mock-blob'
+try {
+    & .\Get-RunningProcesses.ps1 | Out-String | Set-Content -LiteralPath $outputPath
+    $output = Get-Content -LiteralPath $outputPath -Raw
+    foreach ($column in @('Id', 'ProcessName', 'Memory (MB)', 'CPU (s)')) {
+        if ($output -notmatch [regex]::Escape($column)) {
+            throw "Test output is missing the expected column: $column"
+        }
+    }
+
+    New-Item -ItemType Directory -Path $mockBlobPath -Force | Out-Null
+    Copy-Item -LiteralPath $outputPath -Destination $mockBlobPath
+    Write-Host 'Local storage simulation completed; no network request was made.'
+}
+finally {
+    if (Test-Path -LiteralPath $outputPath) {
+        Remove-Item -LiteralPath $outputPath -Force
+    }
+    if (Test-Path -LiteralPath $mockBlobPath) {
+        Remove-Item -LiteralPath $mockBlobPath -Recurse -Force
+    }
+}
+
 Get-Process returns a snapshot of all processes visible to the current user,
 not just applications with windows. Sorting by name and then ID keeps multiple
 instances together. The table shows process ID, name, working-set memory in
