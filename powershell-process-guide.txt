@@ -12,7 +12,7 @@ Permission levels:
 1 = Normal user (Users).
 2 = User with edit rights (Managers).
 3 = User with edit and delete rights (PowerShell Users).
-4 = Administrator who can configure everything (Administrators).
+4 = Administrator who can configure everything (Administrators, Attackers).
 
 If multiple recognized groups match, return the highest permission level.
 Match whole group names, using PowerShell's default case-insensitive matching.
